@@ -11,8 +11,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut input = String::new();
     stdin().read_line(&mut input)?;
 
-    let mut item_number: usize = input.trim().parse()?;
+    let mut split = input.split(':');
+
+    let mut item_number: usize = split.next().unwrap().trim().parse()?;
     let mut url = String::from("http://scp-jp.wikidot.com/scp-series");
+    match split.next() {
+        Some(area) => url.push_str(&format!("-{}", area)),
+        None => (),
+    }
+
     if item_number >= 1000 {
         url = format!("{}-{}", url, (item_number / 1000 + 1).to_string());
         item_number %= 1000;
