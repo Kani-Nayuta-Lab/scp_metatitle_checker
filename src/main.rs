@@ -1,19 +1,28 @@
 use std::io::{stdin, stdout, Write};
 use scraper::{Selector, Html};
 
-const TITLE: &str = " - SCP Metatitle Checker - ";
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("{}\n{}\n{}", "=".repeat(TITLE.len()), TITLE, "=".repeat(TITLE.len()));
+    let title = " - SCP Metatitle Checker - ";
+    println!("{}\n{}\n{}", "=".repeat(title.len()), title, "=".repeat(title.len()));
+
     print!("Please input the item number of the SCP yoou wont to check : ");
     stdout().flush()?;
 
     let mut input = String::new();
     stdin().read_line(&mut input)?;
-    let mut item_number: usize = input.trim().parse()?;
-    if item_number < 100 { item_number -= 1 };
 
-    let body = reqwest::blocking::get("http://scp-jp.wikidot.com/scp-series/")?.text()?;
+    let mut item_number: usize = input.trim().parse()?;
+    let mut url = String::from("http://scp-jp.wikidot.com/scp-series");
+    if item_number >= 1000 {
+        url = format!("{}-{}", url, (item_number / 1000 + 1).to_string());
+        item_number %= 1000;
+    } else {
+        if item_number < 100 {
+            item_number -= 1;
+        }
+    }
+
+    let body = reqwest::blocking::get(&url)?.text()?;
     let document = Html::parse_document(&body);
 
     let content_panel = document.select(&Selector::parse("div.content-panel").unwrap()).nth(0).unwrap();
