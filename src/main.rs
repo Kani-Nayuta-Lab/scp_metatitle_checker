@@ -5,12 +5,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let title = " - SCP Metatitle Checker - ";
     println!("{}\n{}\n{}", "=".repeat(title.len()), title, "=".repeat(title.len()));
 
-    print!("Please input the item number of the SCP yoou wont to check : ");
+    print!("Please input the item number of the SCP you want to check : ");
     stdout().flush()?;
 
     let mut input = String::new();
     stdin().read_line(&mut input)?;
-
     let mut split = input.split(':');
 
     let mut item_number: usize = split.next().unwrap().trim().parse()?;
