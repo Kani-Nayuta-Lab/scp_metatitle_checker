@@ -1,40 +1,26 @@
 use std::io::{stdin, stdout, Write};
 use scraper::{Selector, Html};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let title = " - SCP Metatitle Checker - ";
-    println!("{}\n{}\n{}", "=".repeat(title.len()), title, "=".repeat(title.len()));
+const TITLE: &str = " - SCP Metatitle Checker - ";
+const SCP_URL: &str = "http://scp-jp.wikidot.com/scp-series";
 
-    print!("Please input the item number of the SCP you want to check : ");
-    stdout().flush()?;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("{}\n{}\n{}", "=".repeat(TITLE.len()), TITLE, "=".repeat(TITLE.len()));
+    println!("Please input the item number of the SCP you want to check");
+    println!("If you want to check other branches SCP, Enter ':[BRANCH_NAME]'(Ex. 544:JP) after the item number");
+    print!(">>> ");stdout().flush()?;
 
     let mut input = String::new();
     stdin().read_line(&mut input)?;
+
     let mut split = input.split(':');
-
-    let mut item_number: usize = split.next().unwrap().trim().parse()?;
-    let mut url = String::from("http://scp-jp.wikidot.com/scp-series");
-    match split.next() {
-        Some(area) => url.push_str(&format!("-{}", area)),
-        None => (),
-    }
-
-    if item_number >= 1000 {
-        url = format!("{}-{}", url, (item_number / 1000 + 1).to_string());
-        item_number %= 1000;
-    } else {
-        if item_number < 100 {
-            item_number -= 1;
-        }
-    }
-
-    let body = reqwest::blocking::get(&url)?.text()?;
-    let document = Html::parse_document(&body);
-
-    let content_panel = document.select(&Selector::parse("div.content-panel").unwrap()).nth(0).unwrap();
-    let ul = content_panel.select(&Selector::parse("ul").unwrap()).nth(item_number / 100 + 1).unwrap();
-    let li = ul.select(&Selector::parse("li").unwrap()).nth(item_number % 100).unwrap();
-
-    println!("{}", li.text().collect::<String>());
-    Ok(())
+    let item_number = split.next().unwrap().trim().parse::<usize>()?;
+    let area_url = if let Some(area) = split.next() { format!("{}-{}", SCP_URL, area.to_lowercase()) } else { String::from(SCP_URL) };
+    let (li_num, target_url) = if item_number < 1000 { (item_number - 1, area_url) } else { (item_number % 1000, format!("{}-{}", area_url, (item_number / 1000 + 1))) };
+ 
+    let document = Html::parse_document(&reqwest::blocking::get(&target_url)?.text()?);
+    let selector = Selector::parse("div.content-panel #toc2~ul li").unwrap();
+ 
+    println!("{}", document.select(&selector).nth(li_num).expect("ERROR: Cannot find specified SCP!!").text().collect::<String>());
+    return Ok(())
 }
